@@ -1,0 +1,181 @@
+/* ─────────────────────────────────────────
+   Tailwind v4 (núcleo). Ative plugins se usar.
+────────────────────────────────────────── */
+@import "tailwindcss";
+/* 
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/forms";
+*/
+
+/* ─────────────────────────────────────────
+   Tokens e variáveis (Dark por padrão; Light por media)
+────────────────────────────────────────── */
+:root{
+
+  /* Marca (escala segura para daltônicos) */
+  --brand-50:#f0f7ff; --brand-100:#d9ebff; --brand-200:#b3d7ff;
+  --brand-300:#8cc3ff; --brand-400:#55a8ff; --brand-500:#1f8bff;
+  --brand-600:#0b6ed6; --brand-700:#0856a7; --brand-800:#06427f; --brand-900:#042c54;
+
+  /* Base (tema escuro) */
+  --surface:#0f1b2d; --surface-2:#13233a; --text:#e9eef7; --muted:#a8b3c7;
+
+  /* Estados */
+  --ok:#2aa198; --warn:#d19a00; --danger:#c83737;
+
+  /* Matrix (parâmetros padrão) */
+  --matrix-color: var(--brand-400);
+  --matrix-font-size: 14;   /* px */
+  --matrix-speed: 1;        /* 0.5..2 */
+  --matrix-fade: 0.08;      /* rastro 0..1 */
+  --matrix-opacity: 0.30;   /* opacidade no footer */
+  --matrix-opacity-header: 0.18; /* opacidade no header */
+
+   /* Altura do header (fallback; o JS mede e atualiza em runtime) */
+   --header-h: 72px;   /* antes */
+   --header-h: 60px;   /* menor no mobile/base */
+
+  /* Tipografia fluida (clamp) */
+  --fs-0: clamp(14px, 0.40vw + 13px, 16px); /* base */
+  --fs-1: clamp(18px, 0.80vw + 16px, 22px);
+  --fs-2: clamp(22px, 1.40vw + 18px, 28px);
+  --fs-3: clamp(28px, 2.00vw + 20px, 36px);
+}
+
+/* Aplique o tema claro só quando NÃO estamos forçando escuro */
+@media (prefers-color-scheme: light){
+  :root:not(.force-dark){
+    --surface:#ffffff;
+    --surface-2:#f6f8fb;
+    --text:#101418;
+    --muted:#566071;
+  }
+}
+
+/* Altura progressiva do header por breakpoints */
+@media (min-width: 640px){ :root{ --header-h: 80px; } }
+@media (min-width:1024px){ :root{ --header-h: 88px; } }
+@media (min-width: 640px){ :root{ --header-h: 68px; } }
+@media (min-width:1024px){ :root{ --header-h: 76px; } }
+
+/* Modo calmo (sensorialmente amigável) */
+.mode-calm{
+  --matrix-color: var(--brand-300);
+  --matrix-font-size: 12;
+  --matrix-speed: 0.6;
+  --matrix-fade: 0.12;
+  --matrix-opacity: 0.15;
+  --matrix-opacity-header: 0.08;
+}
+
+/* Respeito à preferência do usuário por menos movimento */
+@media (prefers-reduced-motion: reduce){
+  .matrix-canvas{ display:none !important; }
+}
+
+/* ─────────────────────────────────────────
+   Base / Acessibilidade
+────────────────────────────────────────── */
+
+/* Evita glitches de pintura (sticky/fixed + blur) em alguns zooms */
+html, body { min-height: 100%; height: auto; }
+
+body{
+  background: var(--surface);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-size: var(--fs-0);
+}
+
+/* Link “pular para o conteúdo” — aparece só no foco */
+.skip-link{
+  position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden;
+}
+.skip-link:focus-visible{
+  left:16px; top:16px; width:auto; height:auto; padding:.5rem .75rem;
+  background:var(--brand-600); color:#fff; border-radius:.5rem; z-index:50;
+}
+
+/* Foco visível via teclado */
+:focus-visible{ outline:3px solid var(--brand-400); outline-offset:2px; }
+:focus:not(:focus-visible){ outline:none; }
+
+/* Seleção de texto */
+::selection{ background: color-mix(in oklab, var(--brand-500) 35%, transparent); }
+
+/* Utilidade: estabiliza camadas com transform (usada no header) */
+.will-change-transform{ will-change: transform; }
+
+/* ─────────────────────────────────────────
+   Grid auto-ajustável de cards (não quebra com zoom)
+────────────────────────────────────────── */
+/* Mínimo por card + auto-fit => colunas se encaixam sozinhas */
+.grid-cards{
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(clamp(19rem, 30vw, 26rem), 1fr)
+  );
+}
+
+/* ─────────────────────────────────────────
+   Componentes base (cards, badges, botões, inputs)
+────────────────────────────────────────── */
+
+/* Card com contraste perceptível */
+.card{
+  border-radius: 1rem;
+  padding: clamp(.9rem, 1.2vw, 1.25rem);
+  box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  border: 1px solid color-mix(in oklab, #fff 18%, transparent);
+  background: color-mix(in oklab, var(--surface-2) 85%, #fff 15%);
+  contain: layout paint; /* ajuda a composição com zoom */
+}
+.card-hover{ transition: transform .2s ease-out; }
+.card-hover:hover{ transform: translateY(-2px); }
+
+/* Badge */
+.badge{
+  display:inline-flex; align-items:center; gap:.5rem;
+  font-weight:600; font-size:.75rem;
+  padding:.25rem .5rem; border-radius:999px; color:#fff;
+  background:linear-gradient(135deg, var(--brand-500), var(--brand-700));
+}
+
+/* Botões */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+  padding:.5rem 1rem; font-weight:500; border-radius:.75rem;
+  transition: all .15s ease;
+}
+.btn:disabled{ opacity:.5; cursor:not-allowed; }
+.btn-primary{ color:#fff; background:var(--brand-500); }
+.btn-primary:hover{ background:var(--brand-400); }
+.btn-ghost{
+  background: color-mix(in oklab, var(--surface-2) 85%, #fff 15%);
+  color: var(--text);
+  border: 1px solid color-mix(in oklab, #fff 12%, transparent);
+}
+.btn-ghost:hover{ background: color-mix(in oklab, var(--surface-2) 75%, #fff 25%); }
+.btn-sm{ padding:.375rem .75rem; font-size:.875rem; border-radius:.5rem; }
+
+/* Inputs */
+.dc-input{
+  display:block; width:100%;
+  border-radius:.75rem; padding:.5rem .75rem;
+  border:1px solid color-mix(in oklab, #fff 12%, transparent);
+  background: color-mix(in oklab, var(--surface-2) 92%, #fff 8%);
+  color: var(--text);
+}
+.dc-input::placeholder{ color: color-mix(in oklab, var(--muted) 85%, transparent); }
+.dc-input:focus{ outline:none; box-shadow:0 0 0 3px color-mix(in oklab, var(--brand-400), white 10%); }
+
+/* Tipografia (.prose) */
+.prose{ font-size: var(--fs-0); line-height: 1.65; color: var(--text); }
+.prose :where(h1){ font-size: var(--fs-3); font-weight: 700; color:#fff; }
+.prose :where(h2){ font-size: var(--fs-2); font-weight: 700; color:#fff; }
+.prose :where(h3){ font-size: var(--fs-1); font-weight: 600; color:#fff; }
+.prose a{ color: var(--brand-400); }
+.prose a:hover{ color: var(--brand-300); }
