@@ -11,7 +11,6 @@
    Tokens e variáveis (Dark por padrão; Light por media)
 ────────────────────────────────────────── */
 :root{
-
   /* Marca (escala segura para daltônicos) */
   --brand-50:#f0f7ff; --brand-100:#d9ebff; --brand-200:#b3d7ff;
   --brand-300:#8cc3ff; --brand-400:#55a8ff; --brand-500:#1f8bff;
@@ -31,9 +30,8 @@
   --matrix-opacity: 0.30;   /* opacidade no footer */
   --matrix-opacity-header: 0.18; /* opacidade no header */
 
-   /* Altura do header (fallback; o JS mede e atualiza em runtime) */
-   --header-h: 72px;   /* antes */
-   --header-h: 60px;   /* menor no mobile/base */
+  /* Altura do header — **curva fluida** (substitui os @media duplicados) */
+  --header-h: clamp(56px, 6.5vw, 88px);
 
   /* Tipografia fluida (clamp) */
   --fs-0: clamp(14px, 0.40vw + 13px, 16px); /* base */
@@ -42,7 +40,7 @@
   --fs-3: clamp(28px, 2.00vw + 20px, 36px);
 }
 
-/* Aplique o tema claro só quando NÃO estamos forçando escuro */
+/* Tema claro só quando NÃO estamos forçando escuro */
 @media (prefers-color-scheme: light){
   :root:not(.force-dark){
     --surface:#ffffff;
@@ -51,12 +49,6 @@
     --muted:#566071;
   }
 }
-
-/* Altura progressiva do header por breakpoints */
-@media (min-width: 640px){ :root{ --header-h: 80px; } }
-@media (min-width:1024px){ :root{ --header-h: 88px; } }
-@media (min-width: 640px){ :root{ --header-h: 68px; } }
-@media (min-width:1024px){ :root{ --header-h: 76px; } }
 
 /* Modo calmo (sensorialmente amigável) */
 .mode-calm{
@@ -74,22 +66,31 @@
 }
 
 /* ─────────────────────────────────────────
-   Base / Acessibilidade
+   Base / Acessibilidade (robusto a zoom)
 ────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
-/* Evita glitches de pintura (sticky/fixed + blur) em alguns zooms */
-html, body {
-  height: 100%;
-  min-height: 100%;
+html { 
+  scrollbar-gutter: stable both-edges; 
+  -webkit-text-size-adjust: 100%; 
+  text-size-adjust: 100%; 
 }
 
+:root { color-scheme: dark light; }
+
+html, body { height: 100%; min-height: 100%; }
 body{
+  min-height: 100dvh; /* evita “corte” em mobile com barra dinâmica */
   background: var(--surface);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   font-size: var(--fs-0);
+  line-height: 1.5;
 }
+
+/* Mídia fluida (não vaza em zoom) */
+img, svg, video, canvas { max-inline-size: 100%; block-size: auto; }
 
 /* Link “pular para o conteúdo” — aparece só no foco */
 .skip-link{
@@ -111,9 +112,13 @@ body{
 .will-change-transform{ will-change: transform; }
 
 /* ─────────────────────────────────────────
-   Grid auto-ajustável de cards (não quebra com zoom)
+   Container Queries (para reagir ao ZOOM por **container**)
 ────────────────────────────────────────── */
-/* Mínimo por card + auto-fit => colunas se encaixam sozinhas */
+.cq { container-type: inline-size; } /* use em <main> que envolve as grades */
+
+/* ─────────────────────────────────────────
+   Grid auto-ajustável de cards
+────────────────────────────────────────── */
 .grid-cards{
   display: grid;
   gap: 1rem;
@@ -123,18 +128,26 @@ body{
   );
 }
 
+/* Ajustes finos por CONTAINER (não por viewport) */
+@container (max-width: 720px) { .grid-cards { grid-template-columns: 1fr; } }
+@container (min-width: 721px) and (max-width: 1040px) { 
+  .grid-cards { grid-template-columns: repeat(2, 1fr); } 
+}
+
 /* ─────────────────────────────────────────
    Componentes base (cards, badges, botões, inputs)
 ────────────────────────────────────────── */
-
-/* Card com contraste perceptível */
 .card{
   border-radius: 1rem;
   padding: clamp(.9rem, 1.2vw, 1.25rem);
-  box-shadow: 0 6px 20px rgba(0,0,0,.35);
-  border: 1px solid color-mix(in oklab, #fff 18%, transparent);
+  /* fallbacks + versão moderna */
+  background: #1a2a41;
   background: color-mix(in oklab, var(--surface-2) 85%, #fff 15%);
-  contain: layout paint; /* ajuda a composição com zoom */
+  border: 1px solid rgba(255,255,255,.18);
+  border: 1px solid color-mix(in oklab, #fff 18%, transparent);
+  box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  contain: layout paint;
+  min-inline-size: 0;
 }
 .card-hover{ transition: transform .2s ease-out; }
 .card-hover:hover{ transform: translateY(-2px); }
@@ -152,13 +165,16 @@ body{
   display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
   padding:.5rem 1rem; font-weight:500; border-radius:.75rem;
   transition: all .15s ease;
+  min-block-size: clamp(40px, 5.2vw, 48px); /* alvo confortável em qualquer zoom */
 }
 .btn:disabled{ opacity:.5; cursor:not-allowed; }
 .btn-primary{ color:#fff; background:var(--brand-500); }
 .btn-primary:hover{ background:var(--brand-400); }
 .btn-ghost{
+  background: #18253a;
   background: color-mix(in oklab, var(--surface-2) 85%, #fff 15%);
   color: var(--text);
+  border: 1px solid rgba(255,255,255,.12);
   border: 1px solid color-mix(in oklab, #fff 12%, transparent);
 }
 .btn-ghost:hover{ background: color-mix(in oklab, var(--surface-2) 75%, #fff 25%); }
@@ -168,17 +184,49 @@ body{
 .dc-input{
   display:block; width:100%;
   border-radius:.75rem; padding:.5rem .75rem;
+  border:1px solid rgba(255,255,255,.12);
   border:1px solid color-mix(in oklab, #fff 12%, transparent);
+  background:#14243b;
   background: color-mix(in oklab, var(--surface-2) 92%, #fff 8%);
   color: var(--text);
+  min-block-size: clamp(40px, 5.2vw, 48px);
 }
 .dc-input::placeholder{ color: color-mix(in oklab, var(--muted) 85%, transparent); }
-.dc-input:focus{ outline:none; box-shadow:0 0 0 3px color-mix(in oklab, var(--brand-400), white 10%); }
+.dc-input:focus{
+  outline:none;
+  box-shadow: 0 0 0 .2rem color-mix(in oklab, var(--brand-400), white 10%);
+}
 
 /* Tipografia (.prose) */
-.prose{ font-size: var(--fs-0); line-height: 1.65; color: var(--text); }
-.prose :where(h1){ font-size: var(--fs-3); font-weight: 700; color:#fff; }
-.prose :where(h2){ font-size: var(--fs-2); font-weight: 700; color:#fff; }
+.prose{
+  font-size: var(--fs-0);
+  line-height: 1.65;
+  color: var(--text);
+  max-inline-size: 70ch;      /* largura de linha confortável */
+  margin-inline: auto;
+}
+.prose :where(h1){ font-size: var(--fs-3); font-weight: 700; color:#fff; text-wrap: balance; }
+.prose :where(h2){ font-size: var(--fs-2); font-weight: 700; color:#fff; text-wrap: balance; }
 .prose :where(h3){ font-size: var(--fs-1); font-weight: 600; color:#fff; }
 .prose a{ color: var(--brand-400); }
 .prose a:hover{ color: var(--brand-300); }
+
+/* Blocos de texto fora da .prose */
+.readable { max-inline-size: 70ch; margin-inline: auto; }
+.title-balance { text-wrap: balance; }
+.copy { overflow-wrap: anywhere; hyphens: auto; }
+
+/* Alto contraste quando o usuário prefere */
+@media (prefers-contrast: more) {
+  .card {
+    border-color: color-mix(in oklab, #fff 30%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--brand-500) 45%, transparent);
+  }
+  :focus-visible {
+    outline-width: 4px;
+    outline-color: var(--brand-500);
+  }
+}
+
+/* Redundância útil para flex/grid pais que possam “estourar” */
+.flex, .grid { min-inline-size: 0; }
