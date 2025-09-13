@@ -75,7 +75,7 @@ export default function RootLayout({
       <body
         className={[
           inter.className,
-          'min-h-dvh flex flex-col',
+          'h-full flex flex-col', // << garantir 100% da altura
           'bg-[--surface] text-[--text]',
           'antialiased selection:bg-[color:var(--brand-700)]/50 selection:text-white',
           'scroll-smooth',
